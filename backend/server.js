@@ -10,8 +10,11 @@ app.use(
   cors({
     origin:
       process.env.NODE_ENV === "production"
-        ? "https://property-tracker-backend-bmtl.onrender.com"
+        ? "https://property-tracker-frontend.onrender.com" // ✅ Frontend can call backend
         : "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.json({ limit: "10mb" })); // Add limit for larger payloads
