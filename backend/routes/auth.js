@@ -2,71 +2,60 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const { staticUsers } = require("../utils/staticUsers");
 const router = express.Router();
-
-// Initialize predefined users (run once)
-router.get("/me", async (req, res) => {
-  try {
-    const adminExists = await User.findOne({ email: "admin@properties.com" });
-    if (!adminExists) {
-      const admin = new User({
-        email: "admin@properties.com",
-        password: await bcrypt.hash("admin123", 10),
-        role: "admin",
-      });
-      await admin.save();
-
-      const user = new User({
-        email: "user@properties.com",
-        password: await bcrypt.hash("user123", 10),
-        role: "user",
-      });
-      await user.save();
-
-      console.log(
-        "✅ Created admin@properties.com/admin123 & user@properties.com/user123",
-      );
-    }
-    res.json({
-      message:
-        "Users ready! Use admin@properties.com/admin123 or user@properties.com/user123",
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Server error" });
-  }
-});
 
 // Login - NO AUTH REQUIRED
 router.post("/login", async (req, res) => {
   try {
-    console.log("🔐 Login attempt:", req.body.email); // Debug log
+    const { email, username, password } = req.body;
+    const identifier = email || username;
 
-    const { email, password } = req.body;
-    const user = await User.findOne({ email });
+    if (!identifier || !password) {
+      return res.status(400).json({ error: "Email/username and password are required" });
+    }
+
+    // 1) Try static users first (no DB lookup for these credentials)
+    let user = staticUsers.find(
+      (u) => u.email === identifier || u.username === identifier,
+    );
+    let isStatic = Boolean(user);
+
+    // 2) Fallback to DB users if not one of the predefined static users
+    if (!user) {
+      user = await User.findOne({ email: identifier });
+      if (user) {
+        isStatic = false;
+      }
+    }
 
     if (!user) {
-      console.log("❌ User not found:", email);
       return res.status(400).json({ error: "Invalid credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const passwordHash = isStatic ? user.password : user.password;
+
+    const isMatch = await bcrypt.compare(password, passwordHash);
     if (!isMatch) {
-      console.log("❌ Wrong password for:", email);
       return res.status(400).json({ error: "Invalid credentials" });
     }
+
+    const tokenPayload = {
+      id: isStatic ? user.id : user._id,
+      email: user.email,
+      role: user.role,
+      static: isStatic,
+    };
 
     const token = jwt.sign(
-      { id: user._id },
+      tokenPayload,
       process.env.JWT_SECRET || "fallback_secret_key_123",
-      {
-        expiresIn: "7d",
-      },
+      { expiresIn: "7d" },
     );
 
-    console.log("✅ Login success:", email, user.role);
     res.json({
       token,
-      user: { id: user._id, email: user.email, role: user.role },
+      user: { id: tokenPayload.id, email: user.email, role: user.role },
     });
   } catch (error) {
     console.error("Login error:", error);
