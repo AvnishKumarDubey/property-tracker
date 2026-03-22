@@ -12,12 +12,16 @@ const auth = async (req, res, next) => {
     let user = null;
 
     if (decoded.static) {
-      user = staticUsers.find((u) => u.id === decoded.id || u.email === decoded.email);
+      user = staticUsers.find(
+        (u) => u.id === decoded.id || u.email === decoded.email,
+      );
     } else {
       user = await User.findById(decoded.id);
       if (!user) {
         // If this was not a static user, attempt static fallback as precaution
-        user = staticUsers.find((u) => u.id === decoded.id || u.email === decoded.email);
+        user = staticUsers.find(
+          (u) => u.id === decoded.id || u.email === decoded.email,
+        );
       }
     }
 

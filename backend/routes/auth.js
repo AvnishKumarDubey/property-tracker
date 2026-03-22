@@ -12,7 +12,9 @@ router.post("/login", async (req, res) => {
     const identifier = email || username;
 
     if (!identifier || !password) {
-      return res.status(400).json({ error: "Email/username and password are required" });
+      return res
+        .status(400)
+        .json({ error: "Email/username and password are required" });
     }
 
     // 1) Try static users first (no DB lookup for these credentials)
