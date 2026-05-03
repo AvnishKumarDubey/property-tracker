@@ -8,16 +8,29 @@ const app = express();
 // Middleware - IMPORTANT ORDER!
 app.use(
   cors({
-    origin:
-      process.env.NODE_ENV === "production"
-        ? "https://property-tracker-frontend.onrender.com" // ✅ Frontend can call backend
-        : "http://localhost:3000",
+    origin: function (origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:3000",
+        "http://localhost:5173", // Vite dev port
+        "https://property-tracker-frontend.onrender.com",
+      ];
+
+      if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-app.use(express.json({ limit: "10mb" })); // Add limit for larger payloads
+
+// Handle preflight requests explicitly
+app.options("*", cors());
+
+app.use(express.json({ limit: "10mb" }));
 
 // AUTH ROUTES FIRST (before auth middleware)
 app.use("/api/auth", require("./routes/auth"));

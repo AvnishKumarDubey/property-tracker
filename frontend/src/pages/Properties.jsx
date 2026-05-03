@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import api from "../utils/api";
 
 const Properties = () => {
   const { user } = useAuth();
@@ -15,7 +15,7 @@ const Properties = () => {
 
   const fetchProperties = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/properties");
+      const res = await api.get("/properties");
       setProperties(res.data);
     } catch (error) {
       console.error("Error fetching properties:", error);
@@ -26,7 +26,7 @@ const Properties = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post("http://localhost:5000/api/properties", {
+      await api.post("/properties", {
         name,
         address,
       });
@@ -43,7 +43,7 @@ const Properties = () => {
     if (user.role !== "admin") return;
     if (!window.confirm("Delete this property?")) return;
     try {
-      await axios.delete(`http://localhost:5000/api/properties/${id}`);
+      await api.delete(`/properties/${id}`);
       fetchProperties();
     } catch (error) {
       console.error("Error deleting property:", error);

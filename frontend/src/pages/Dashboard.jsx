@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import api from "../utils/api";
 import {
   LineChart,
   Line,
@@ -29,7 +29,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchProperties = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/properties");
+        const res = await api.get("/properties");
         setProperties(res.data);
       } catch (error) {
         console.error("Error fetching properties:", error);
@@ -44,9 +44,9 @@ const Dashboard = () => {
       setLoading(true);
       try {
         const url = selectedProperty
-          ? `/api/transactions/dashboard/${selectedProperty}`
-          : "/api/transactions/dashboard";
-        const res = await axios.get(`http://localhost:5000${url}`);
+          ? `/transactions/dashboard/${selectedProperty}`
+          : "/transactions/dashboard";
+        const res = await api.get(url);
         setAnalytics(res.data);
       } catch (error) {
         console.error("Error fetching analytics:", error);
@@ -65,7 +65,7 @@ const Dashboard = () => {
 
     try {
       const link = document.createElement("a");
-      link.href = `http://localhost:5000/api/transactions/report/${selectedProperty}`;
+      link.href = `${api.defaults.baseURL}/transactions/report/${selectedProperty}`;
       link.setAttribute("download", `report-${selectedProperty || "all"}.pdf`);
       document.body.appendChild(link);
       link.click();

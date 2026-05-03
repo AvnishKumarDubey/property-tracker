@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import api from "../utils/api";
 
 const Transactions = () => {
   const { user } = useAuth();
@@ -20,21 +20,19 @@ const Transactions = () => {
   }, [selectedProperty]);
 
   const fetchProperties = async () => {
-    const res = await axios.get("/api/properties");
+    const res = await api.get("/properties");
     setProperties(res.data);
   };
 
   const fetchTransactions = async () => {
-    const res = await axios.get(
-      `/api/transactions?propertyId=${selectedProperty}`,
-    );
+    const res = await api.get(`/transactions?propertyId=${selectedProperty}`);
     setTransactions(res.data);
   };
 
   const addTransaction = async (e) => {
     e.preventDefault();
     setLoading(true);
-    await axios.post("/api/transactions", {
+    await api.post("/transactions", {
       ...form,
       propertyId: selectedProperty,
     });
@@ -46,7 +44,7 @@ const Transactions = () => {
   const deleteTransaction = async (id) => {
     if (user.role !== "admin") return;
     if (!window.confirm("Delete this transaction?")) return;
-    await axios.delete(`/api/transactions/${id}`);
+    await api.delete(`/transactions/${id}`);
     fetchTransactions();
   };
 
